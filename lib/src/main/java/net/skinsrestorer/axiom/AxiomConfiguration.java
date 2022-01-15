@@ -3,15 +3,16 @@ package net.skinsrestorer.axiom;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
-import org.yaml.snakeyaml.composer.Composer;
 import org.yaml.snakeyaml.constructor.Constructor;
-import org.yaml.snakeyaml.nodes.Node;
+import org.yaml.snakeyaml.nodes.*;
 import org.yaml.snakeyaml.representer.Representer;
 
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 public class AxiomConfiguration {
     private final Yaml yaml;
@@ -64,16 +65,58 @@ public class AxiomConfiguration {
         return writer.toString();
     }
 
-    /*
+
     public Object get(String path) {
+        String[] parts = path.split("\\.");
         try {
-            return config.node((Object[]) path.split("\\."));
+            Node node = config;
+            int i = 0;
+            for (String part : parts) {
+                if (!(node instanceof MappingNode))
+                    return null;
+
+                MappingNode mappingNode = (MappingNode) node;
+                for (NodeTuple tuple : mappingNode.getValue()) {
+                    if (!(tuple.getKeyNode() instanceof ScalarNode))
+                        continue;
+
+                    ScalarNode keyNode = (ScalarNode) tuple.getKeyNode();
+                    if (keyNode.getValue().equals(part)) {
+                        node = tuple.getValueNode();
+                    }
+                }
+                i++;
+            }
+
+            if (i == parts.length) {
+                System.out.println("Found node: " + node);
+                if (node instanceof ScalarNode) {
+                    ScalarNode scalarNode = (ScalarNode) node;
+                    return scalarNode.getValue();
+                } if (node instanceof SequenceNode) {
+                    SequenceNode sequenceNode = (SequenceNode) node;
+
+                    List<String> list = new ArrayList<>();
+                    for (Node node1 : sequenceNode.getValue()) {
+                        if (node1 instanceof ScalarNode) {
+                            ScalarNode scalarNode = (ScalarNode) node1;
+                            list.add(scalarNode.getValue());
+                        }
+                    }
+                    return list;
+                } else {
+                    return null;
+                }
+            } else {
+                return null;
+            }
         } catch (Exception e) {
             e.printStackTrace();
+            return null;
         }
-        return null;
     }
 
+    /*
     public ConfigurationNode get(String path, String defValue) {
         // Save new values if enabled (locale file)
         if (get(path).virtual() && setMissing) {

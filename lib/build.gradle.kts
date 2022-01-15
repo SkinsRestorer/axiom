@@ -6,6 +6,9 @@ repositories {
     mavenCentral()
 }
 
+java.sourceCompatibility = JavaVersion.VERSION_1_8
+java.targetCompatibility = JavaVersion.VERSION_1_8
+
 dependencies {
     // https://mvnrepository.com/artifact/org.yaml/snakeyaml
     api("org.yaml:snakeyaml:1.30")
