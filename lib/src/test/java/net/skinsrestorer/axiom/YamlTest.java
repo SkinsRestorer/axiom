@@ -60,9 +60,9 @@ public class YamlTest {
         }
         assert file != null;
         config.load(new StringReader(file));
-        assertEquals(config.getBoolean("a.b.c"), true);
+        assertEquals(true, config.getBoolean("a.b.c"));
         config.set("a.b.c", false);
-        assertEquals(config.getBoolean("a.b.c"), false);
+        assertEquals(false, config.getBoolean("a.b.c"));
     }
 
     @Test
@@ -81,7 +81,7 @@ public class YamlTest {
         config.load(new StringReader(file));
         assertNull(config.getBoolean("a.b.z"));
         config.set("a.b.z", true);
-        assertEquals(config.getBoolean("a.b.z"), true);
+        assertEquals(true, config.getBoolean("a.b.z"));
     }
 
     @Test
@@ -99,7 +99,7 @@ public class YamlTest {
         assert file != null;
         config.load(new StringReader(file));
 
-        assertEquals(config.getBoolean("a.b.c"), true);
+        assertEquals(true, config.getBoolean("a.b.c"));
         config.set("a.b.c", null);
         assertNull(config.getBoolean("a.b.c"));
     }
@@ -134,8 +134,8 @@ public class YamlTest {
 
         assertNull(config.getStringList("a.b.l"));
         config.set("a.b.l", list);
-        assertEquals(config.getStringList("a.b.l").size(), 3);
-        assertEquals(config.getStringList("a.b.l"), list);
+        assertEquals(3, config.getStringList("a.b.l").size());
+        assertEquals(list, config.getStringList("a.b.l"));
 
         config.set("a.b.d", null);
         config.set("a.b.e", null);

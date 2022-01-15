@@ -1,6 +1,7 @@
 package net.skinsrestorer.axiom;
 
 import org.apache.commons.lang3.math.NumberUtils;
+import org.jetbrains.annotations.Nullable;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
@@ -68,25 +69,28 @@ public class AxiomConfiguration {
         }
     }
 
-    public void mergeDefault(AxiomConfiguration defaultConfig, boolean overWriteComments) {
+    public void mergeDefault(AxiomConfiguration defaultConfig, boolean overWriteComments, boolean overWrite) {
         Map<String, Node> defaultNodes = recursivelyGetAllNodes(defaultConfig.config);
         Map<String, Node> currentNodes = recursivelyGetAllNodes(config);
 
         for (Map.Entry<String, Node> entry : defaultNodes.entrySet()) {
-            if (overWriteComments) {
-                if (currentNodes.containsKey(entry.getKey())) {
-                    currentNodes.get(entry.getKey()).setBlockComments(entry.getValue().getBlockComments());
-                    currentNodes.get(entry.getKey()).setInLineComments(entry.getValue().getInLineComments());
-                    currentNodes.get(entry.getKey()).setEndComments(entry.getValue().getEndComments());
-                }
-            }
-
-            if (!currentNodes.containsKey(entry.getKey())) {
+            if (!currentNodes.containsKey(entry.getKey()) || overWrite) {
                 if (entry.getValue() instanceof SequenceNode) {
                     set(entry.getKey(), defaultConfig.getStringList(entry.getKey()));
                 } else if (entry.getValue() instanceof ScalarNode) {
                     ScalarNode seq = (ScalarNode) entry.getValue();
                     set(entry.getKey(), seq.getValue());
+                }
+            }
+        }
+
+        if (overWriteComments) {
+            currentNodes = recursivelyGetAllNodes(config);
+            for (Map.Entry<String, Node> entry : defaultNodes.entrySet()) {
+                if (currentNodes.containsKey(entry.getKey())) {
+                    currentNodes.get(entry.getKey()).setBlockComments(entry.getValue().getBlockComments());
+                    currentNodes.get(entry.getKey()).setInLineComments(entry.getValue().getInLineComments());
+                    currentNodes.get(entry.getKey()).setEndComments(entry.getValue().getEndComments());
                 }
             }
         }
@@ -228,7 +232,7 @@ public class AxiomConfiguration {
                                 if (destroy) {
                                     nodeValue.remove(z);
                                 } else {
-                                    nodeValue.set(z, createTuple(part, value));
+                                    nodeValue.set(z, createTuple(part, value, tuple));
                                 }
 
                                 return;
@@ -238,7 +242,7 @@ public class AxiomConfiguration {
                     }
 
 
-                    nodeValue.add(createTuple(part, value));
+                    nodeValue.add(createTuple(part, value, null));
                     return;
                 }
 
@@ -259,7 +263,7 @@ public class AxiomConfiguration {
 
                 if (x == node.getValue().size()) {
                     MappingNode newMapping = (MappingNode) yaml.represent(new HashMap<>());
-                    node.getValue().add(createTuple(part, newMapping));
+                    node.getValue().add(createTuple(part, newMapping, null));
                     node = newMapping;
                 }
                 i++;
@@ -270,7 +274,12 @@ public class AxiomConfiguration {
     }
 
 
-    private NodeTuple createTuple(Object key, Object value) {
+    private NodeTuple createTuple(Object key, Object value, @Nullable NodeTuple previousTuple) {
+        Node keyNode = yaml.represent(key);
+        keyNode.setBlockComments(previousTuple != null ? previousTuple.getKeyNode().getBlockComments() : null);
+        keyNode.setInLineComments(previousTuple != null ? previousTuple.getKeyNode().getInLineComments() : null);
+        keyNode.setEndComments(previousTuple != null ? previousTuple.getKeyNode().getEndComments() : null);
+
         if (value instanceof String) {
             if (NumberUtils.isParsable((String) value)) {
                 value = NumberUtils.createNumber((String) value);
@@ -278,6 +287,10 @@ public class AxiomConfiguration {
         }
 
         Node valueNode = yaml.represent(value);
+        valueNode.setBlockComments(previousTuple != null ? previousTuple.getValueNode().getBlockComments() : null);
+        valueNode.setInLineComments(previousTuple != null ? previousTuple.getValueNode().getInLineComments() : null);
+        valueNode.setEndComments(previousTuple != null ? previousTuple.getValueNode().getEndComments() : null);
+
         if (valueNode instanceof SequenceNode) {
             SequenceNode sequenceNode = (SequenceNode) valueNode;
             int i = 0;
@@ -297,6 +310,6 @@ public class AxiomConfiguration {
             }
         }
 
-        return new NodeTuple(yaml.represent(key), valueNode);
+        return new NodeTuple(keyNode, valueNode);
     }
 }

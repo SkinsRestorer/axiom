@@ -32,8 +32,36 @@ public class MergeTest {
         AxiomConfiguration defaultConfig = new AxiomConfiguration();
         defaultConfig.load(new StringReader("b: 3\nc: 4\n"));
 
-        config.mergeDefault(defaultConfig, false);
+        config.mergeDefault(defaultConfig, false, false);
         System.out.println(config.saveToString());
         assertEquals(4, config.getInt("c"));
+        assertEquals(2, config.getInt("b"));
+    }
+
+    @Test
+    public void overwriteMergeTest() throws IOException {
+        AxiomConfiguration config = new AxiomConfiguration();
+        config.load(new StringReader("a: 1\nb: 2\n"));
+        AxiomConfiguration defaultConfig = new AxiomConfiguration();
+        defaultConfig.load(new StringReader("b: 3\nc: 4\n"));
+
+        config.mergeDefault(defaultConfig, false, true);
+        System.out.println(config.saveToString());
+        assertEquals(4, config.getInt("c"));
+        assertEquals(3, config.getInt("b"));
+    }
+
+    @Test
+    public void overwriteCommentsMergeTest() throws IOException {
+        AxiomConfiguration config = new AxiomConfiguration();
+        config.load(new StringReader("a: 1\nb: 2\n"));
+        AxiomConfiguration defaultConfig = new AxiomConfiguration();
+        defaultConfig.load(new StringReader("b: 3 # Test\nc: 4 # Test 2\n"));
+
+        config.mergeDefault(defaultConfig, true, false);
+        System.out.println(config.saveToString());
+        assertEquals(4, config.getInt("c"));
+        assertEquals(2, config.getInt("b"));
+        assertEquals("a: 1\nb: 2 # Test\nc: 4 # Test 2\n", config.saveToString());
     }
 }
