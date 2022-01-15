@@ -1,5 +1,6 @@
 plugins {
     `java-library`
+    `maven-publish`
     id("net.kyori.indra")
     id("net.kyori.indra.publishing")
 }
