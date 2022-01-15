@@ -1,5 +1,6 @@
 package net.skinsrestorer.axiom;
 
+import org.apache.commons.lang3.math.NumberUtils;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
@@ -10,13 +11,11 @@ import org.yaml.snakeyaml.representer.Representer;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 public class AxiomConfiguration {
     private final Yaml yaml;
-    private MappingNode config;
+    public MappingNode config;
 
     public AxiomConfiguration() {
         this(2, 2);
@@ -31,6 +30,7 @@ public class AxiomConfiguration {
         dumper.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
         dumper.setIndicatorIndent(indicatorIdent);
         dumper.setIndentWithIndicator(true);
+        dumper.setDefaultScalarStyle(DumperOptions.ScalarStyle.PLAIN);
         Constructor constructor = new Constructor(loaderOptions);
         Representer representer = new Representer();
         yaml = new Yaml(constructor, representer, dumper, loaderOptions);
@@ -69,9 +69,54 @@ public class AxiomConfiguration {
     }
 
     public void mergeDefault(AxiomConfiguration defaultConfig, boolean overWriteComments) {
-        defaultConfig.config.getValue().forEach(tuple -> {
+        Map<String, Node> defaultNodes = recursivelyGetAllNodes(defaultConfig.config);
+        Map<String, Node> currentNodes = recursivelyGetAllNodes(config);
 
-        });
+        for (Map.Entry<String, Node> entry : defaultNodes.entrySet()) {
+            if (overWriteComments) {
+                if (currentNodes.containsKey(entry.getKey())) {
+                    currentNodes.get(entry.getKey()).setBlockComments(entry.getValue().getBlockComments());
+                    currentNodes.get(entry.getKey()).setInLineComments(entry.getValue().getInLineComments());
+                    currentNodes.get(entry.getKey()).setEndComments(entry.getValue().getEndComments());
+                }
+            }
+
+            if (!currentNodes.containsKey(entry.getKey())) {
+                if (entry.getValue() instanceof SequenceNode) {
+                    set(entry.getKey(), defaultConfig.getStringList(entry.getKey()));
+                } else if (entry.getValue() instanceof ScalarNode) {
+                    ScalarNode seq = (ScalarNode) entry.getValue();
+                    set(entry.getKey(), seq.getValue());
+                }
+            }
+        }
+    }
+
+    public Map<String, Node> recursivelyGetAllNodes(Node node) {
+        return recursivelyGetAllNodes(node, "");
+    }
+
+    private Map<String, Node> recursivelyGetAllNodes(Node node, String prefix) {
+        Map<String, Node> nodes = new LinkedHashMap<>();
+
+        if (!prefix.isEmpty())
+            prefix += ".";
+
+        if (node instanceof MappingNode) {
+            MappingNode mapping = (MappingNode) node;
+            for (NodeTuple tuple : mapping.getValue()) {
+                if (tuple.getKeyNode() instanceof ScalarNode) {
+                    ScalarNode key = (ScalarNode) tuple.getKeyNode();
+                    String keyString = prefix + key.getValue();
+
+                    nodes.put(keyString, tuple.getValueNode());
+
+                    nodes.putAll(recursivelyGetAllNodes(tuple.getValueNode(), keyString));
+                }
+            }
+        }
+
+        return nodes;
     }
 
     public String saveToString() {
@@ -224,15 +269,23 @@ public class AxiomConfiguration {
         }
     }
 
+
     private NodeTuple createTuple(Object key, Object value) {
+        if (value instanceof String) {
+            if (NumberUtils.isParsable((String) value)) {
+                value = NumberUtils.createNumber((String) value);
+            }
+        }
+
         Node valueNode = yaml.represent(value);
         if (valueNode instanceof SequenceNode) {
+            SequenceNode sequenceNode = (SequenceNode) valueNode;
             int i = 0;
-            for (Node node : new ArrayList<>(((SequenceNode) valueNode).getValue())) {
+            for (Node node : new ArrayList<>(sequenceNode.getValue())) {
                 if (node instanceof ScalarNode) {
                     ScalarNode scalarNode = (ScalarNode) node;
 
-                    ((SequenceNode) valueNode).getValue().set(i,
+                    sequenceNode.getValue().set(i,
                             new ScalarNode(
                                     scalarNode.getTag(),
                                     scalarNode.getValue(),
@@ -243,6 +296,7 @@ public class AxiomConfiguration {
                 i++;
             }
         }
+
         return new NodeTuple(yaml.represent(key), valueNode);
     }
 }
