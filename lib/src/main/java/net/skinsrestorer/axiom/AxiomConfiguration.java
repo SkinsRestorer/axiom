@@ -53,6 +53,12 @@ public class AxiomConfiguration {
         }
     }
 
+    public void load(String string) throws IOException {
+        try (StringReader reader = new StringReader(string)) {
+            load(reader);
+        }
+    }
+
     public void load(Reader reader) throws IOException {
         try {
             config = (MappingNode) yaml.compose(reader);

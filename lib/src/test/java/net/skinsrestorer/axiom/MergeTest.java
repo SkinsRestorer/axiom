@@ -20,7 +20,7 @@ public class MergeTest {
             e.printStackTrace();
         }
         assert file != null;
-        config.load(new StringReader(file));
+        config.load(file);
 
         System.out.println(config.recursivelyGetAllNodes(config.config).keySet());
     }
@@ -28,12 +28,11 @@ public class MergeTest {
     @Test
     public void simpleMergeTest() throws IOException {
         AxiomConfiguration config = new AxiomConfiguration();
-        config.load(new StringReader("a: 1\nb: 2\n"));
+        config.load("a: 1\nb: 2\n");
         AxiomConfiguration defaultConfig = new AxiomConfiguration();
-        defaultConfig.load(new StringReader("b: 3\nc: 4\n"));
+        defaultConfig.load("b: 3\nc: 4\n");
 
         config.mergeDefault(defaultConfig, false, false);
-        System.out.println(config.saveToString());
         assertEquals(4, config.getInt("c"));
         assertEquals(2, config.getInt("b"));
     }
@@ -41,9 +40,9 @@ public class MergeTest {
     @Test
     public void overwriteMergeTest() throws IOException {
         AxiomConfiguration config = new AxiomConfiguration();
-        config.load(new StringReader("a: 1\nb: 2\n"));
+        config.load("a: 1\nb: 2\n");
         AxiomConfiguration defaultConfig = new AxiomConfiguration();
-        defaultConfig.load(new StringReader("b: 3\nc: 4\n"));
+        defaultConfig.load("b: 3\nc: 4\n");
 
         config.mergeDefault(defaultConfig, false, true);
         System.out.println(config.saveToString());
@@ -54,9 +53,9 @@ public class MergeTest {
     @Test
     public void overwriteCommentsMergeTest() throws IOException {
         AxiomConfiguration config = new AxiomConfiguration();
-        config.load(new StringReader("a: 1\nb: 2\n"));
+        config.load("a: 1\nb: 2\n");
         AxiomConfiguration defaultConfig = new AxiomConfiguration();
-        defaultConfig.load(new StringReader("b: 3 # Test\nc: 4 # Test 2\n"));
+        defaultConfig.load("b: 3 # Test\nc: 4 # Test 2\n");
 
         config.mergeDefault(defaultConfig, true, false);
         System.out.println(config.saveToString());

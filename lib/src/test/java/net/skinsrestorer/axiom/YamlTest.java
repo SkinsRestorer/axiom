@@ -25,7 +25,7 @@ public class YamlTest {
             e.printStackTrace();
         }
         assert file != null;
-        config.load(new StringReader(file));
+        config.load(file);
         assertEquals(file, config.saveToString());
     }
 
@@ -42,7 +42,7 @@ public class YamlTest {
             e.printStackTrace();
         }
         assert file != null;
-        config.load(new StringReader(file));
+        config.load(file);
         assertEquals(file, config.saveToString());
     }
 
@@ -59,7 +59,7 @@ public class YamlTest {
             e.printStackTrace();
         }
         assert file != null;
-        config.load(new StringReader(file));
+        config.load(file);
         assertEquals(true, config.getBoolean("a.b.c"));
         config.set("a.b.c", false);
         assertEquals(false, config.getBoolean("a.b.c"));
@@ -78,7 +78,7 @@ public class YamlTest {
             e.printStackTrace();
         }
         assert file != null;
-        config.load(new StringReader(file));
+        config.load(file);
         assertNull(config.getBoolean("a.b.z"));
         config.set("a.b.z", true);
         assertEquals(true, config.getBoolean("a.b.z"));
@@ -97,7 +97,7 @@ public class YamlTest {
             e.printStackTrace();
         }
         assert file != null;
-        config.load(new StringReader(file));
+        config.load(file);
 
         assertEquals(true, config.getBoolean("a.b.c"));
         config.set("a.b.c", null);
@@ -125,7 +125,7 @@ public class YamlTest {
             e.printStackTrace();
         }
         assert file != null;
-        config.load(new StringReader(file));
+        config.load(file);
 
         List<String> list = new ArrayList<>();
         list.add("true");

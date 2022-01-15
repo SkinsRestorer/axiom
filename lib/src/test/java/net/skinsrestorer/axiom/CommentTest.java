@@ -15,7 +15,7 @@ public class CommentTest {
 
         AxiomConfiguration config = new AxiomConfiguration();
 
-        config.load(new StringReader(data));
+        config.load(data);
 
         assertEquals(1, config.getInt("a"));
         config.set("a", 2);
@@ -38,11 +38,11 @@ public class CommentTest {
         }
 
         assert file != null;
-        config.load(new StringReader(file));
+        config.load(file);
         assertEquals(file, config.saveToString());
 
         AxiomConfiguration defaultConfig = new AxiomConfiguration();
-        defaultConfig.load(new StringReader(data));
+        defaultConfig.load(data);
         config.mergeDefault(defaultConfig);
 
         assertNotEquals(file, config.saveToString());
