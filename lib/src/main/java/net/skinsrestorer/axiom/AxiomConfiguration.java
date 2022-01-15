@@ -272,8 +272,8 @@ public class AxiomConfiguration {
                 }
 
                 if (x == node.getValue().size()) {
-                    MappingNode newMapping = (MappingNode) yaml.represent(new HashMap<>());
-                    node.getValue().add(createTuple(part, newMapping, null));
+                    MappingNode newMapping = (MappingNode) yaml.represent(Collections.emptyMap());
+                    node.getValue().add(createTuple(part, newMapping));
                     node = newMapping;
                 }
                 i++;
@@ -283,6 +283,9 @@ public class AxiomConfiguration {
         }
     }
 
+    private NodeTuple createTuple(Object key, Node value) {
+        return new NodeTuple(yaml.represent(key), value);
+    }
 
     private NodeTuple createTuple(Object key, Object value, @Nullable NodeTuple previousTuple) {
         Node keyNode = yaml.represent(key);

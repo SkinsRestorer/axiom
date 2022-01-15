@@ -47,6 +47,16 @@ public class YamlTest {
     }
 
     @Test
+    @DisplayName("Test setting a value in a empty config")
+    public void setEmptyTest() {
+        AxiomConfiguration config = new AxiomConfiguration();
+
+        assertNull(config.getBoolean("a.b.c"));
+        config.set("a.b.c", true);
+        assertEquals(true, config.getBoolean("a.b.c"));
+    }
+
+    @Test
     @DisplayName("Test setting a value")
     public void setTest() throws IOException {
         AxiomConfiguration config = new AxiomConfiguration();
