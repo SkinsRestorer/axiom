@@ -12,46 +12,53 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 public class AxiomConfiguration {
     private final Yaml yaml;
-    private final Path path;
-    private Node config;
+    private MappingNode config;
 
-    {
+    public AxiomConfiguration() {
+        this(2, 2);
+    }
+
+    public AxiomConfiguration(int indent, int indicatorIdent) {
         LoaderOptions loaderOptions = new LoaderOptions();
         loaderOptions.setProcessComments(true);
         DumperOptions dumper = new DumperOptions();
         dumper.setProcessComments(true);
+        dumper.setIndent(indent);
+        dumper.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
+        dumper.setIndicatorIndent(indicatorIdent);
+        dumper.setIndentWithIndicator(true);
         Constructor constructor = new Constructor(loaderOptions);
         Representer representer = new Representer();
         yaml = new Yaml(constructor, representer, dumper, loaderOptions);
     }
 
-    public AxiomConfiguration(Path path) {
-        this.path = path;
-    }
-
-    public void load() throws IOException {
+    //
+    // Loaders and savers
+    //
+    public void load(Path path) throws IOException {
         try (InputStream input = Files.newInputStream(path)) {
-            try (InputStreamReader reader = new InputStreamReader(input)) {
-                config = yaml.compose(reader);
-            }
+            load(input);
         }
     }
 
     public void load(InputStream input) throws IOException {
         try (InputStreamReader reader = new InputStreamReader(input)) {
-            config = yaml.compose(reader);
+            load(reader);
         }
     }
 
-    public Node getConfig() {
-        return config;
+    public void load(Reader reader) throws IOException {
+        try {
+            config = (MappingNode) yaml.compose(reader);
+        } catch (Exception e) {
+            throw new InvalidObjectException("Invalid configuration file");
+        }
     }
 
-    public void save() throws IOException {
+    public void save(Path path) throws IOException {
         try (OutputStream out = Files.newOutputStream(path)) {
             try (OutputStreamWriter writer = new OutputStreamWriter(out)) {
                 yaml.dump(config, writer);
@@ -65,61 +72,94 @@ public class AxiomConfiguration {
         return writer.toString();
     }
 
-
-    public Object get(String path) {
+    //
+    // Accessors
+    //
+    public Node getNode(String path) {
         String[] parts = path.split("\\.");
         try {
             Node node = config;
             int i = 0;
             for (String part : parts) {
-                if (!(node instanceof MappingNode))
-                    return null;
-
-                MappingNode mappingNode = (MappingNode) node;
-                for (NodeTuple tuple : mappingNode.getValue()) {
-                    if (!(tuple.getKeyNode() instanceof ScalarNode))
-                        continue;
-
-                    ScalarNode keyNode = (ScalarNode) tuple.getKeyNode();
-                    if (keyNode.getValue().equals(part)) {
-                        node = tuple.getValueNode();
-                    }
+                if (i == parts.length) {
+                    return node;
                 }
-                i++;
-            }
 
-            if (i == parts.length) {
-                System.out.println("Found node: " + node);
-                if (node instanceof ScalarNode) {
-                    ScalarNode scalarNode = (ScalarNode) node;
-                    return scalarNode.getValue();
-                } if (node instanceof SequenceNode) {
-                    SequenceNode sequenceNode = (SequenceNode) node;
+                if (node instanceof MappingNode) {
+                    MappingNode mappingNode = (MappingNode) node;
+                    for (NodeTuple tuple : mappingNode.getValue()) {
+                        if (tuple.getKeyNode() instanceof ScalarNode) {
+                            ScalarNode keyNode = (ScalarNode) tuple.getKeyNode();
 
-                    List<String> list = new ArrayList<>();
-                    for (Node node1 : sequenceNode.getValue()) {
-                        if (node1 instanceof ScalarNode) {
-                            ScalarNode scalarNode = (ScalarNode) node1;
-                            list.add(scalarNode.getValue());
+                            if (keyNode.getValue().equals(part)) {
+                                node = tuple.getValueNode();
+                                break;
+                            }
+                        } else {
+                            return null;
                         }
                     }
-                    return list;
                 } else {
                     return null;
                 }
-            } else {
-                return null;
+
+                i++;
             }
+
+            return node;
         } catch (Exception e) {
             e.printStackTrace();
             return null;
         }
     }
 
+    public String getString(String path) {
+        Node node = getNode(path);
+        if (node instanceof ScalarNode) {
+            return ((ScalarNode) node).getValue();
+        } else {
+            return null;
+        }
+    }
+
+    public Integer getInt(String path) throws NumberFormatException {
+        String value = getString(path);
+        if (value != null) {
+            return Integer.parseInt(value);
+        } else {
+            return null;
+        }
+    }
+
+    public Boolean getBoolean(String path) {
+        String value = getString(path);
+        if (value != null) {
+            return Boolean.parseBoolean(value);
+        } else {
+            return null;
+        }
+    }
+
+    public List<String> getStringList(String path) {
+        Node node = getNode(path);
+        if (node instanceof SequenceNode) {
+            List<String> list = new ArrayList<>();
+            SequenceNode sequenceNode = (SequenceNode) node;
+            for (Node valueNode : sequenceNode.getValue()) {
+                if (valueNode instanceof ScalarNode) {
+                    ScalarNode scalarNode = (ScalarNode) valueNode;
+                    list.add(scalarNode.getValue());
+                }
+            }
+            return list;
+        } else {
+            return null;
+        }
+    }
+
     /*
-    public ConfigurationNode get(String path, String defValue) {
-        // Save new values if enabled (locale file)
-        if (get(path).virtual() && setMissing) {
+    public Node getNode(String path, Object defValue) {
+        if (getNode(path).virtual() && setMissing) {
             logger.info("Saving new config value " + path + " to " + name);
             set(path, defValue);
         }
@@ -127,50 +167,26 @@ public class AxiomConfiguration {
         return get(path);
     }
 
-    public boolean getBoolean(String path) {
-        return (boolean) get(path);
-    }
-
-    public boolean getBoolean(String path, Boolean defValue) {
-        return get(path).getBoolean(defValue);
-    }
-
-    public int getInt(String path) {
-        return get(path).getInt();
-    }
-
-    public int getInt(String path, Integer defValue) {
-        return get(path).getInt(defValue);
-    }
-
-    private String getString(String path) {
-        return get(path).getString();
-    }
-
     public String getString(String path, String defValue) {
         return get(path, defValue).getString(defValue);
     }
-
-    public List<String> getStringList(String path) {
-        try {
-            return get(path).getList(String.class);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return Collections.emptyList();
-    }
-
-    @SuppressWarnings("unchecked")
+*/
+/*
     public void set(String path, Object value) {
+        String[] parts = path.split("\\.");
         try {
-            ConfigurationNode node = config.node((Object[]) path.split("\\."));
-            if (value instanceof List) {
-                node.setList(String.class, (List<String>) value);
-            } else {
-                node.set(value);
-            }
+            Node node = config;
+            int i = 0;
+            for (String part : parts) {
+                if (node instanceof MappingNode) {
+                    MappingNode mappingNode = (MappingNode) node;
+                    for (NodeTuple tuple : mappingNode.getValue()) {
 
-            save();
+                    }
+                } else if (node instanceof ScalarNode) {
+
+                }
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
