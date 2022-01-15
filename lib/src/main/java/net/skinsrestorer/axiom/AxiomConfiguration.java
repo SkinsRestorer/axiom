@@ -11,6 +11,7 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class AxiomConfiguration {
@@ -33,6 +34,7 @@ public class AxiomConfiguration {
         Constructor constructor = new Constructor(loaderOptions);
         Representer representer = new Representer();
         yaml = new Yaml(constructor, representer, dumper, loaderOptions);
+        config = (MappingNode) yaml.represent(new HashMap<>());
     }
 
     //
@@ -64,6 +66,12 @@ public class AxiomConfiguration {
                 yaml.dump(config, writer);
             }
         }
+    }
+
+    public void mergeDefault(AxiomConfiguration defaultConfig, boolean overWriteComments) {
+        defaultConfig.config.getValue().forEach(tuple -> {
+
+        });
     }
 
     public String saveToString() {
@@ -157,38 +165,84 @@ public class AxiomConfiguration {
         }
     }
 
-    /*
-    public Node getNode(String path, Object defValue) {
-        if (getNode(path).virtual() && setMissing) {
-            logger.info("Saving new config value " + path + " to " + name);
-            set(path, defValue);
-        }
-
-        return get(path);
-    }
-
-    public String getString(String path, String defValue) {
-        return get(path, defValue).getString(defValue);
-    }
-*/
-/*
     public void set(String path, Object value) {
+        boolean destroy = value == null;
         String[] parts = path.split("\\.");
         try {
-            Node node = config;
+            MappingNode node = config;
             int i = 0;
             for (String part : parts) {
-                if (node instanceof MappingNode) {
-                    MappingNode mappingNode = (MappingNode) node;
-                    for (NodeTuple tuple : mappingNode.getValue()) {
+                if (i == parts.length - 1) {
+                    List<NodeTuple> nodeValue = node.getValue();
 
+                    int z = 0;
+                    for (NodeTuple tuple : new ArrayList<>(nodeValue)) {
+                        if (tuple.getKeyNode() instanceof ScalarNode) {
+                            ScalarNode keyNode = (ScalarNode) tuple.getKeyNode();
+                            if (keyNode.getValue().equals(part)) {
+                                if (destroy) {
+                                    nodeValue.remove(z);
+                                } else {
+                                    nodeValue.set(z, createTuple(part, value));
+                                }
+
+                                return;
+                            }
+                        }
+                        z++;
                     }
-                } else if (node instanceof ScalarNode) {
 
+
+                    nodeValue.add(createTuple(part, value));
+                    return;
                 }
+
+                int x = 0;
+                for (NodeTuple tuple : node.getValue()) {
+                    if (tuple.getKeyNode() instanceof ScalarNode) {
+                        if (tuple.getValueNode() instanceof MappingNode) {
+                            ScalarNode keyNode = (ScalarNode) tuple.getKeyNode();
+
+                            if (keyNode.getValue().equals(part)) {
+                                node = (MappingNode) tuple.getValueNode();
+                                break;
+                            }
+                        }
+                    }
+                    x++;
+                }
+
+                if (x == node.getValue().size()) {
+                    MappingNode newMapping = (MappingNode) yaml.represent(new HashMap<>());
+                    node.getValue().add(createTuple(part, newMapping));
+                    node = newMapping;
+                }
+                i++;
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }*/
+    }
+
+    private NodeTuple createTuple(Object key, Object value) {
+        Node valueNode = yaml.represent(value);
+        if (valueNode instanceof SequenceNode) {
+            int i = 0;
+            for (Node node : new ArrayList<>(((SequenceNode) valueNode).getValue())) {
+                if (node instanceof ScalarNode) {
+                    ScalarNode scalarNode = (ScalarNode) node;
+
+                    ((SequenceNode) valueNode).getValue().set(i,
+                            new ScalarNode(
+                                    scalarNode.getTag(),
+                                    scalarNode.getValue(),
+                                    scalarNode.getStartMark(),
+                                    scalarNode.getEndMark(),
+                                    DumperOptions.ScalarStyle.DOUBLE_QUOTED));
+                }
+                i++;
+            }
+        }
+        return new NodeTuple(yaml.represent(key), valueNode);
+    }
 }

@@ -1,5 +1,7 @@
 a:
   b:
+    e:
+      f: true
     c: true
     d:
       - "1"
