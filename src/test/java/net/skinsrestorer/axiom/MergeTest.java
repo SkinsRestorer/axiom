@@ -2,10 +2,14 @@ package net.skinsrestorer.axiom;
 
 import org.junit.jupiter.api.Test;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 public class MergeTest {
     @Test
@@ -62,5 +66,29 @@ public class MergeTest {
         assertEquals(4, config.getInt("c"));
         assertEquals(2, config.getInt("b"));
         assertEquals("a: 1\nb: 2 # Test\nc: 4 # Test 2\n", config.saveToString());
+    }
+
+    @Test
+    public void hardMergeTest() throws IOException {
+        AxiomConfiguration config = new AxiomConfiguration();
+        String file = null;
+        try (InputStream stream = getClass().getClassLoader().getResourceAsStream("test.yml")) {
+            assert stream != null;
+            file = new BufferedReader(new InputStreamReader(stream)).lines().collect(Collectors.joining("\n", "", "\n"));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        assert file != null;
+        config.load(file);
+
+        AxiomConfiguration defaultConfig = new AxiomConfiguration();
+        defaultConfig.load(file);
+
+        config.set("Debug", null);
+        assertNotEquals(defaultConfig.getBoolean("Debug"), config.getBoolean("Debug"));
+        assertNotEquals(defaultConfig.saveToString(), config.saveToString());
+
+        config.mergeDefault(defaultConfig, false, false);
+        assertEquals(defaultConfig.saveToString(), config.saveToString());
     }
 }
