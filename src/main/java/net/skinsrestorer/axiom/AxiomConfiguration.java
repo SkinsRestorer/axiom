@@ -71,9 +71,15 @@ public class AxiomConfiguration {
     public void save(Path path) throws IOException {
         try (OutputStream out = Files.newOutputStream(path)) {
             try (OutputStreamWriter writer = new OutputStreamWriter(out)) {
-                yaml.dump(config, writer);
+                yaml.serialize(config, writer);
             }
         }
+    }
+
+    public String saveToString() {
+        StringWriter writer = new StringWriter();
+        yaml.serialize(config, writer);
+        return writer.toString();
     }
 
     public void mergeDefault(AxiomConfiguration defaultConfig) {
@@ -135,12 +141,6 @@ public class AxiomConfiguration {
         }
 
         return nodes;
-    }
-
-    public String saveToString() {
-        StringWriter writer = new StringWriter();
-        yaml.serialize(config, writer);
-        return writer.toString();
     }
 
     //
