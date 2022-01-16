@@ -99,19 +99,30 @@ public class AxiomConfiguration {
             }
         }
 
-        if (overWriteComments) {
-            currentNodes = recursivelyGetAllNodes(config);
-            for (Map.Entry<String, NodeTuple> entry : defaultNodes.entrySet()) {
-                if (currentNodes.containsKey(entry.getKey())) {
-                    NodeTuple currentNode = currentNodes.get(entry.getKey());
-                    currentNode.getKeyNode().setBlockComments(entry.getValue().getKeyNode().getBlockComments());
-                    currentNode.getKeyNode().setInLineComments(entry.getValue().getKeyNode().getInLineComments());
-                    currentNode.getKeyNode().setEndComments(entry.getValue().getKeyNode().getEndComments());
+        currentNodes = recursivelyGetAllNodes(config);
+        for (Map.Entry<String, NodeTuple> entry : defaultNodes.entrySet()) {
+            if (currentNodes.containsKey(entry.getKey())) {
+                NodeTuple currentNode = currentNodes.get(entry.getKey());
+                setComments(currentNode.getKeyNode(), entry.getValue().getKeyNode(), overWriteComments);
+                setComments(currentNode.getValueNode(), entry.getValue().getValueNode(), overWriteComments);
+            }
+        }
+    }
 
-                    currentNode.getValueNode().setBlockComments(entry.getValue().getValueNode().getBlockComments());
-                    currentNode.getValueNode().setInLineComments(entry.getValue().getValueNode().getInLineComments());
-                    currentNode.getValueNode().setEndComments(entry.getValue().getValueNode().getEndComments());
-                }
+    private void setComments(Node currentNode, Node defaultNode, boolean overWrite) {
+        if (overWrite) {
+            currentNode.setBlockComments(defaultNode.getBlockComments());
+            currentNode.setInLineComments(defaultNode.getInLineComments());
+            currentNode.setEndComments(defaultNode.getEndComments());
+        } else {
+            if (currentNode.getBlockComments() == null) {
+                currentNode.setBlockComments(defaultNode.getBlockComments());
+            }
+            if (currentNode.getInLineComments() == null) {
+                currentNode.setInLineComments(defaultNode.getInLineComments());
+            }
+            if (currentNode.getEndComments() == null) {
+                currentNode.setEndComments(defaultNode.getEndComments());
             }
         }
     }
@@ -299,7 +310,7 @@ public class AxiomConfiguration {
 
                 if (x == node.getValue().size()) {
                     MappingNode newMapping = (MappingNode) yaml.represent(Collections.emptyMap());
-                    node.getValue().add(createTuple(part, newMapping, null));
+                    node.getValue().add(createTuple(part, newMapping));
                     node = newMapping;
                 }
                 i++;
@@ -321,18 +332,15 @@ public class AxiomConfiguration {
         return createTuple(key, yaml.represent(value), previousTuple);
     }
 
-    private NodeTuple createTuple(Object key, Node value, @Nullable NodeTuple previousTuple) {
-        return createTuple(yaml.represent(key), value, previousTuple);
+    private NodeTuple createTuple(Object key, Node value) {
+        return createTuple(yaml.represent(key), value, null);
     }
 
     private NodeTuple createTuple(Node key, Node value, @Nullable NodeTuple previousTuple) {
-        key.setBlockComments(previousTuple != null ? previousTuple.getKeyNode().getBlockComments() : null);
-        key.setInLineComments(previousTuple != null ? previousTuple.getKeyNode().getInLineComments() : null);
-        key.setEndComments(previousTuple != null ? previousTuple.getKeyNode().getEndComments() : null);
-
-        value.setBlockComments(previousTuple != null ? previousTuple.getValueNode().getBlockComments() : null);
-        value.setInLineComments(previousTuple != null ? previousTuple.getValueNode().getInLineComments() : null);
-        value.setEndComments(previousTuple != null ? previousTuple.getValueNode().getEndComments() : null);
+        if (previousTuple != null) {
+            setComments(key, previousTuple.getKeyNode(), true);
+            setComments(value, previousTuple.getValueNode(), true);
+        }
 
         if (value instanceof SequenceNode) {
             SequenceNode sequenceNode = (SequenceNode) value;
