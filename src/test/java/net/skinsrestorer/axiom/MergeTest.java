@@ -91,4 +91,27 @@ public class MergeTest {
         config.mergeDefault(defaultConfig, false, false);
         assertEquals(defaultConfig.saveToString(), config.saveToString());
     }
+
+    @Test
+    public void commentRootTest() throws IOException {
+        AxiomConfiguration config = new AxiomConfiguration();
+
+        String file = null;
+        try (InputStream stream = getClass().getClassLoader().getResourceAsStream("comment_root_test.yml")) {
+            assert stream != null;
+            file = new BufferedReader(new InputStreamReader(stream)).lines().collect(Collectors.joining("\n", "", "\n"));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        assert file != null;
+        config.load(file);
+        assertEquals(file, config.saveToString());
+
+        AxiomConfiguration mergable = new AxiomConfiguration();
+
+        mergable.mergeDefault(config);
+
+        assertEquals(file, mergable.saveToString());
+    }
 }

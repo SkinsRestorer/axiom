@@ -87,6 +87,8 @@ public class AxiomConfiguration {
     }
 
     public void mergeDefault(AxiomConfiguration defaultConfig, boolean overWriteComments, boolean overWrite) {
+        setComments(config, defaultConfig.config, overWriteComments);
+
         Map<String, NodeTuple> defaultNodes = recursivelyGetAllNodes(defaultConfig.config);
         Map<String, NodeTuple> currentNodes = recursivelyGetAllNodes(config);
 
