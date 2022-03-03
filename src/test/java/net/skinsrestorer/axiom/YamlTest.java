@@ -155,4 +155,22 @@ public class YamlTest {
         config.set("a.b.c", null);
         assertEquals(file2, config.saveToString());
     }
+
+    @Test
+    public void getKeysTest() throws IOException {
+        AxiomConfiguration config = new AxiomConfiguration();
+
+        String file = null;
+        try (InputStream stream = getClass().getClassLoader().getResourceAsStream("small_test.yml")) {
+            assert stream != null;
+            file = new BufferedReader(new InputStreamReader(stream)).lines().collect(Collectors.joining("\n", "", "\n"));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        assert file != null;
+        config.load(file);
+
+        assertEquals(3, config.getSection("a.b").getKeys().size());
+    }
 }

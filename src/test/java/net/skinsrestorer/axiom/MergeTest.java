@@ -26,7 +26,7 @@ public class MergeTest {
         assert file != null;
         config.load(file);
 
-        System.out.println(config.recursivelyGetAllNodes(config.config).keySet());
+        System.out.println(config.recursivelyGetAllNodes(config.rootNode).keySet());
     }
 
     @Test
