@@ -88,6 +88,37 @@ public class MergeTest {
         assertNotEquals(defaultConfig.getBoolean("Debug"), config.getBoolean("Debug"));
         assertNotEquals(defaultConfig.saveToString(), config.saveToString());
 
+        System.out.println(config.saveToString());
+
+        config.mergeDefault(defaultConfig, false, false);
+        assertEquals(defaultConfig.saveToString(), config.saveToString());
+        System.out.println(config.saveToString());
+    }
+
+    @Test
+    public void hardMergeWithOtherTest() throws IOException {
+        AxiomConfiguration config = new AxiomConfiguration();
+        String file = null;
+        try (InputStream stream = getClass().getClassLoader().getResourceAsStream("sr_old.yml")) {
+            assert stream != null;
+            file = new BufferedReader(new InputStreamReader(stream)).lines().collect(Collectors.joining("\n", "", "\n"));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        assert file != null;
+        config.load(file);
+
+        String file2 = null;
+        try (InputStream stream = getClass().getClassLoader().getResourceAsStream("sr_new.yml")) {
+            assert stream != null;
+            file2 = new BufferedReader(new InputStreamReader(stream)).lines().collect(Collectors.joining("\n", "", "\n"));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        assert file2 != null;
+        AxiomConfiguration defaultConfig = new AxiomConfiguration();
+        defaultConfig.load(file2);
+
         config.mergeDefault(defaultConfig, false, false);
         assertEquals(defaultConfig.saveToString(), config.saveToString());
     }
