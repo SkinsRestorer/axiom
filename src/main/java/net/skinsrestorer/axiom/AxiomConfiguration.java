@@ -48,7 +48,7 @@ public class AxiomConfiguration extends AxiomConfigurationSection{
     }
 
     public void load(InputStream input) throws IOException {
-        try (InputStreamReader reader = new InputStreamReader(input)) {
+        try (InputStreamReader reader = new InputStreamReader(input, StandardCharsets.UTF_8)) {
             load(reader);
         }
     }
@@ -69,7 +69,7 @@ public class AxiomConfiguration extends AxiomConfigurationSection{
 
     public void save(Path path) throws IOException {
         try (OutputStream out = Files.newOutputStream(path)) {
-            try (OutputStreamWriter writer = new OutputStreamWriter(out)) {
+            try (OutputStreamWriter writer = new OutputStreamWriter(out, StandardCharsets.UTF_8)) {
                 yaml.serialize(rootNode, writer);
             }
         }
