@@ -1,0 +1,35 @@
+# Advanced features that should not be messed with unless you know what you're doing.
+advanced:
+  # If activated the server will only be shown as supported for the following protocols.
+  supportedProtocol:
+    activated: false
+    unsupportedNumber: -1 # Shown when the protocol is not supported.
+    # The supported protocol versions.
+    # Protocol version numbers can be found here: https://wiki.vg/Protocol_version_numbers
+    numbers:
+      - 757
+      - 756
+  # If activated the server will display a status per server address the request comes from.
+  # This is useful for servers that have multiple addresses and want to route traffic to another server.
+  # The default status is shown when the request doesn't come from the below addresses.
+  perDomainStatus:
+    activated: false
+    domains:
+      example:
+        domain: example.com
+        description:
+          activated: true
+          text:
+            - "&3Hello domain 1!"
+        favicon:
+          activated: false
+          file: example.png
+      example2:
+        domain: example2.com
+        description:
+          activated: true
+          text:
+            - "&3Hello domain 2!"
+        favicon:
+          activated: false
+          file: example2.png

@@ -1,0 +1,11 @@
+# Advanced features that should not be messed with unless you know what you're doing.
+advanced:
+  # If activated the server will only be shown as supported for the following protocols.
+  supportedProtocol:
+    activated: false
+    unsupportedNumber: -1 # Shown when the protocol is not supported.
+    # The supported protocol versions.
+    # Protocol version numbers can be found here: https://wiki.vg/Protocol_version_numbers
+    numbers:
+      - 757
+      - 756

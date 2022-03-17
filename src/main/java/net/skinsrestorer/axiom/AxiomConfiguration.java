@@ -20,7 +20,7 @@ public class AxiomConfiguration extends AxiomConfigurationSection{
 
     public AxiomConfiguration(int indent, int indicatorIdent) {
         super(generateYAML(indent, indicatorIdent), null);
-        rootNode = (MappingNode) yaml.represent(new HashMap<>());
+        rootNode = (MappingNode) yaml.represent(Collections.emptyMap());
     }
 
     private static Yaml generateYAML(int indent, int indicatorIdent) {
@@ -89,50 +89,72 @@ public class AxiomConfiguration extends AxiomConfigurationSection{
     public void mergeDefault(AxiomConfiguration defaultConfig, boolean overWriteComments, boolean overWrite) {
         setComments(rootNode, defaultConfig.rootNode, overWriteComments);
 
-        Map<String, NodeTuple> defaultNodes = recursivelyGetAllNodes(defaultConfig.rootNode);
-        Map<String, NodeTuple> currentNodes = recursivelyGetAllNodes(rootNode);
+        Map<String, NodeTuple> defaultValues = defaultConfig.getAllValueNodes();
+        Map<String, NodeTuple> currentValues = getAllValueNodes();
+
+        for (Map.Entry<String, NodeTuple> entry : defaultValues.entrySet()) {
+            String key = entry.getKey();
+            Object value = entry.getValue();
+
+            if (!currentValues.containsKey(key) || overWrite) {
+                set(key, value);
+            }
+
+            // System out it
+            System.out.println("Key: " + key + " Value: " + value);
+        }
+        System.out.println(defaultConfig.rootNode.getValue().get(0).getKeyNode());
+        /*
+        List<String> defaultNodes = defaultConfig.getKeys();
+        List<String> currentNodes = getKeys();
 
         for (Map.Entry<String, NodeTuple> entry : defaultNodes.entrySet()) {
             if (!currentNodes.containsKey(entry.getKey()) || overWrite) {
                 if (entry.getValue().getValueNode() instanceof SequenceNode
                         || entry.getValue().getValueNode() instanceof ScalarNode) {
+                    System.out.println(entry.getKey());
+                    System.out.println(entry.getValue().getKeyNode().toString());
+                    System.out.println(saveToString());
                     set(entry.getKey(), entry.getValue());
+
                 }
             }
         }
 
-        currentNodes = recursivelyGetAllNodes(rootNode);
+        currentNodes = getAllValueNodes(rootNode);
         for (Map.Entry<String, NodeTuple> entry : defaultNodes.entrySet()) {
             if (currentNodes.containsKey(entry.getKey())) {
                 NodeTuple currentNode = currentNodes.get(entry.getKey());
                 setComments(currentNode.getKeyNode(), entry.getValue().getKeyNode(), overWriteComments);
                 setComments(currentNode.getValueNode(), entry.getValue().getValueNode(), overWriteComments);
             }
-        }
+        }*/
     }
 
-    public Map<String, NodeTuple> recursivelyGetAllNodes(Node node) {
-        return recursivelyGetAllNodes(node, "");
+    public Map<String, NodeTuple> getAllValueNodes() {
+        return getAllValueNodes(this, "");
     }
 
-    private Map<String, NodeTuple> recursivelyGetAllNodes(Node node, String prefix) {
+    private Map<String, NodeTuple> getAllValueNodes(AxiomConfigurationSection node, String prefix) {
         Map<String, NodeTuple> nodes = new LinkedHashMap<>();
 
         if (!prefix.isEmpty())
             prefix += ".";
 
-        if (node instanceof MappingNode) {
-            MappingNode mapping = (MappingNode) node;
-            for (NodeTuple tuple : mapping.getValue()) {
-                if (tuple.getKeyNode() instanceof ScalarNode) {
-                    ScalarNode key = (ScalarNode) tuple.getKeyNode();
-                    String keyString = prefix + key.getValue();
+        for (String key : node.getKeys()) {
+            /*
+            String newKey = prefix + key;
 
-                    nodes.put(keyString, tuple);
+            Node valueNode = node.getDirectSubNode(key);
 
-                    nodes.putAll(recursivelyGetAllNodes(tuple.getValueNode(), keyString));
+            if (valueNode instanceof MappingNode) {
+                nodes.putAll(getAllValueNodes(new AxiomConfigurationSection(yaml, (MappingNode) valueNode), newKey));
+            } else {
+                nodes.put(newKey, new NodeTuple(node.getKeyNode(key), valueNode));
+                if (valueNode instanceof ScalarNode) {
+                    nodes.put(newKey, ((ScalarNode) valueNode).getValue());
                 }
-            }
+            }*/
         }
 
         return nodes;
