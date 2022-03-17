@@ -8,10 +8,7 @@ import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.nodes.*;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @AllArgsConstructor
 public class AxiomConfigurationSection {
@@ -53,6 +50,18 @@ public class AxiomConfigurationSection {
 		return keys;
 	}
 
+	protected Node getKeyNodeOfSubNode(String name) {
+		for (NodeTuple tuple : rootNode.getValue()) {
+			if (tuple.getKeyNode() instanceof ScalarNode) {
+				ScalarNode keyNode = (ScalarNode) tuple.getKeyNode();
+				if (keyNode.getValue().equals(name)) {
+					return tuple.getKeyNode();
+				}
+			}
+		}
+		return null;
+	}
+
 	protected Node getDirectSubNode(String name) {
 		for (NodeTuple tuple : rootNode.getValue()) {
 			if (tuple.getKeyNode() instanceof ScalarNode) {
@@ -60,6 +69,33 @@ public class AxiomConfigurationSection {
 				if (keyNode.getValue().equals(name)) {
 					return tuple.getValueNode();
 				}
+			}
+		}
+		return null;
+	}
+
+	protected Node setDirectSubNode(String name, Node setKeyNode, Node setValueNode) {
+		if (rootNode.getValue().stream().map(NodeTuple::getKeyNode).anyMatch(node1 -> node1 instanceof ScalarNode && ((ScalarNode) node1).getValue().equals(name))) {
+			rootNode.getValue().replaceAll(
+					tuple -> {
+						if (tuple.getKeyNode() instanceof ScalarNode) {
+							ScalarNode keyNode = (ScalarNode) tuple.getKeyNode();
+							if (keyNode.getValue().equals(name)) {
+								if (setKeyNode != null) {
+									return new NodeTuple(setKeyNode, setValueNode);
+								} else {
+									return new NodeTuple(keyNode, setValueNode);
+								}
+							}
+						}
+						return tuple;
+					}
+			);
+		} else {
+			if (setKeyNode != null) {
+				rootNode.getValue().add(new NodeTuple(setKeyNode, setValueNode));
+			} else {
+				rootNode.getValue().add(createTuple(name, setValueNode));
 			}
 		}
 		return null;
@@ -121,7 +157,6 @@ public class AxiomConfigurationSection {
 	public void set(String path, Object value) {
 		String[] parts = path.split("\\.");
 		String target = parts[parts.length - 1];
-		System.out.println("Setting " + target + " to " + value);
 		String parentPath = path.substring(0, path.length() - target.length());
 
 		NodeTuple keyNode = null;
@@ -138,10 +173,10 @@ public class AxiomConfigurationSection {
 			}
 		}
 
-		set(path, createTuple(target, value, keyNode));
+		set(path, value == null ? null : createTuple(target, value, keyNode));
 	}
 
-	public void set(String path, NodeTuple value) {
+	private void set(String path, NodeTuple value) {
 		String[] parts = path.split("\\.");
 		try {
 			MappingNode node = rootNode;
@@ -180,6 +215,8 @@ public class AxiomConfigurationSection {
 								if (nodeTuple.getKeyNode() instanceof ScalarNode) {
 									ScalarNode scalarKeyNode = (ScalarNode) nodeTuple.getKeyNode();
 									if (scalarKeyNode.getValue().equals(part)) {
+										setComments(value.getKeyNode(), nodeTuple.getKeyNode(), false);
+										setComments(value.getValueNode(), nodeTuple.getValueNode(), false);
 										return value;
 									}
 								}
@@ -206,7 +243,38 @@ public class AxiomConfigurationSection {
 		}
 	}
 
-	protected void setComments(Node currentNode, Node defaultNode, boolean overWrite) {
+	public void merge(AxiomConfigurationSection defaultConfig) {
+		merge(defaultConfig, false, true, false);
+	}
+
+	public void merge(AxiomConfigurationSection defaultConfig, boolean overWriteComments, boolean overWriteInvalid, boolean overWrite) {
+		setComments(rootNode, defaultConfig.rootNode, overWriteComments);
+
+		for (String key : defaultConfig.getKeys()) {
+			Node defaultNode = defaultConfig.getDirectSubNode(key);
+			Node defaultParentNode = defaultConfig.getKeyNodeOfSubNode(key);
+			Node currentNode = getDirectSubNode(key);
+
+			if (currentNode == null || overWrite) {
+				setDirectSubNode(key, defaultParentNode, defaultNode);
+			} else {
+				setComments(currentNode, defaultNode, overWriteComments);
+
+				if (defaultNode instanceof MappingNode) {
+					if (currentNode instanceof MappingNode) {
+						AxiomConfigurationSection childDefaultSection = new AxiomConfigurationSection(yaml, (MappingNode) defaultNode);
+						AxiomConfigurationSection childCurrentSection = new AxiomConfigurationSection(yaml, (MappingNode) currentNode);
+
+						childCurrentSection.merge(childDefaultSection, overWriteComments, overWriteInvalid, overWrite);
+					} else if (overWriteInvalid) {
+						setDirectSubNode(key, defaultParentNode, defaultNode);
+					}
+				}
+			}
+		}
+	}
+
+	protected static void setComments(Node currentNode, Node defaultNode, boolean overWrite) {
 		if (overWrite) {
 			currentNode.setBlockComments(defaultNode.getBlockComments());
 			currentNode.setInLineComments(defaultNode.getInLineComments());

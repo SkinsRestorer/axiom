@@ -46,7 +46,7 @@ public class CommentTest {
 
         AxiomConfiguration defaultConfig = new AxiomConfiguration();
         defaultConfig.load(data);
-        config.mergeDefault(defaultConfig);
+        config.merge(defaultConfig);
 
         assertNotEquals(file, config.saveToString());
         assertEquals(1, config.getInt("d"));

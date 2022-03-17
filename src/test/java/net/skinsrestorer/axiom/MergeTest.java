@@ -25,8 +25,6 @@ public class MergeTest {
         }
         assert file != null;
         config.load(file);
-
-        System.out.println(config.getAllValueNodes().keySet());
     }
 
     @Test
@@ -36,7 +34,7 @@ public class MergeTest {
         AxiomConfiguration defaultConfig = new AxiomConfiguration();
         defaultConfig.load("b: 3\nc: 4\n");
 
-        config.mergeDefault(defaultConfig, false, false);
+        config.merge(defaultConfig, false, true, false);
         assertEquals(4, config.getInt("c"));
         assertEquals(2, config.getInt("b"));
     }
@@ -48,7 +46,7 @@ public class MergeTest {
         AxiomConfiguration defaultConfig = new AxiomConfiguration();
         defaultConfig.load("b: 3\nc: 4\n");
 
-        config.mergeDefault(defaultConfig, false, true);
+        config.merge(defaultConfig, false, true, true);
         System.out.println(config.saveToString());
         assertEquals(4, config.getInt("c"));
         assertEquals(3, config.getInt("b"));
@@ -61,7 +59,7 @@ public class MergeTest {
         AxiomConfiguration defaultConfig = new AxiomConfiguration();
         defaultConfig.load("b: 3 # Test\nc: 4 # Test 2\n");
 
-        config.mergeDefault(defaultConfig, true, false);
+        config.merge(defaultConfig, true, true, false);
         System.out.println(config.saveToString());
         assertEquals(4, config.getInt("c"));
         assertEquals(2, config.getInt("b"));
@@ -90,7 +88,7 @@ public class MergeTest {
 
         System.out.println(config.saveToString());
 
-        config.mergeDefault(defaultConfig, false, false);
+        config.merge(defaultConfig, false, true, false);
         assertEquals(defaultConfig.saveToString(), config.saveToString());
         System.out.println(config.saveToString());
     }
@@ -119,7 +117,7 @@ public class MergeTest {
         AxiomConfiguration defaultConfig = new AxiomConfiguration();
         defaultConfig.load(file2);
 
-        config.mergeDefault(defaultConfig, false, false);
+        config.merge(defaultConfig, false, true, false);
         assertEquals(defaultConfig.saveToString(), config.saveToString());
     }
 
@@ -147,7 +145,7 @@ public class MergeTest {
         AxiomConfiguration defaultConfig = new AxiomConfiguration();
         defaultConfig.load(file2);
 
-        config.mergeDefault(defaultConfig, false, false);
+        config.merge(defaultConfig, false, true, false);
         assertEquals(defaultConfig.saveToString(), config.saveToString());
     }
 
@@ -169,7 +167,7 @@ public class MergeTest {
 
         AxiomConfiguration mergable = new AxiomConfiguration();
 
-        mergable.mergeDefault(config);
+        mergable.merge(config);
 
         assertEquals(file, mergable.saveToString());
     }
