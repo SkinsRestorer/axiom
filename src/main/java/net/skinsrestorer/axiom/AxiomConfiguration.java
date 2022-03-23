@@ -33,6 +33,7 @@ public class AxiomConfiguration extends AxiomConfigurationSection{
         dumper.setIndicatorIndent(indicatorIdent);
         dumper.setIndentWithIndicator(true);
         dumper.setDefaultScalarStyle(DumperOptions.ScalarStyle.PLAIN);
+        dumper.setAllowUnicode(true);
         Constructor constructor = new Constructor(loaderOptions);
         Representer representer = new Representer();
 
@@ -69,10 +70,8 @@ public class AxiomConfiguration extends AxiomConfigurationSection{
     }
 
     public void save(Path path) throws IOException {
-        try (OutputStream out = Files.newOutputStream(path)) {
-            try (OutputStreamWriter writer = new OutputStreamWriter(out, StandardCharsets.UTF_8)) {
-                yaml.serialize(rootNode, writer);
-            }
+        try (BufferedWriter out = Files.newBufferedWriter(path)) {
+            out.write(saveToString());
         }
     }
 
