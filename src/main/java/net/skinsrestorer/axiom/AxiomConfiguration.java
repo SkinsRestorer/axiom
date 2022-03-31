@@ -44,13 +44,13 @@ public class AxiomConfiguration extends AxiomConfigurationSection{
     // Loaders and savers
     //
     public void load(Path path) throws IOException {
-        try (InputStream input = Files.newInputStream(path)) {
-            load(input);
+        try (BufferedReader reader = Files.newBufferedReader(path)) {
+            load(reader);
         }
     }
 
     public void load(InputStream input) throws IOException {
-        try (InputStreamReader reader = new InputStreamReader(input, StandardCharsets.UTF_8)) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(input, StandardCharsets.UTF_8))) {
             load(reader);
         }
     }
