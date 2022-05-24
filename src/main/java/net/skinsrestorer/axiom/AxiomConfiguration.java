@@ -34,6 +34,7 @@ public class AxiomConfiguration extends AxiomConfigurationSection{
         dumper.setIndentWithIndicator(true);
         dumper.setDefaultScalarStyle(DumperOptions.ScalarStyle.PLAIN);
         dumper.setAllowUnicode(true);
+        dumper.setSplitLines(false);
         Constructor constructor = new Constructor(loaderOptions);
         Representer representer = new Representer();
 
