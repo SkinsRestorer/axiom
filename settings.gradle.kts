@@ -5,7 +5,7 @@ pluginManagement {
     plugins {
         id("net.kyori.indra") version "3.0.0"
         id("net.kyori.indra.git") version "3.0.1"
-        id("net.kyori.indra.publishing") version "2.2.0"
+        id("net.kyori.indra.publishing") version "3.0.1"
     }
 }
 
