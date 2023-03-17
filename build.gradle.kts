@@ -22,7 +22,7 @@ dependencies {
     implementation("org.jetbrains:annotations:23.0.0")
 
     // https://mvnrepository.com/artifact/org.yaml/snakeyaml
-    api("org.yaml:snakeyaml:1.33")
+    api("org.yaml:snakeyaml:2.0")
 
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.1")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.9.1")
