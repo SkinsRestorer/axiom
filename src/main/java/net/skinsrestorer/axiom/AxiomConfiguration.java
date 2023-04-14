@@ -36,7 +36,7 @@ public class AxiomConfiguration extends AxiomConfigurationSection{
         dumper.setAllowUnicode(true);
         dumper.setSplitLines(false);
         Constructor constructor = new Constructor(loaderOptions);
-        Representer representer = new Representer();
+        Representer representer = new Representer(dumper);
 
         return new Yaml(constructor, representer, dumper, loaderOptions);
     }
