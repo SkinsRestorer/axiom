@@ -16,7 +16,7 @@ java.sourceCompatibility = JavaVersion.VERSION_1_8
 java.targetCompatibility = JavaVersion.VERSION_1_8
 
 dependencies {
-    implementation("org.jetbrains:annotations:23.1.0")
+    implementation("org.jetbrains:annotations:24.0.1")
 
     // https://mvnrepository.com/artifact/org.yaml/snakeyaml
     api("org.yaml:snakeyaml:2.0")
